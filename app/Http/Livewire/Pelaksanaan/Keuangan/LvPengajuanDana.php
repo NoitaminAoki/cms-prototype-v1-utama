@@ -7,9 +7,9 @@ use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Storage;
 use App\Models\{
     Keuangan\PengajuanDana,
-
     Master\MsSubCode,
 };
+use App\Helpers\StringGenerator;
 
 class LvPengajuanDana extends Component
 {
@@ -20,6 +20,9 @@ class LvPengajuanDana extends Component
         'evSetInputTanggal' => 'setInputTanggal',
     ];
 
+    public $page_attribute = [
+        'title' => 'Pengajuan Anggaran Proyek',
+    ];
     public $page_permission = [
         'add' => 'pengajuan-dana add',
         'delete' => 'pengajuan-dana delete',
@@ -30,25 +33,19 @@ class LvPengajuanDana extends Component
     public $input_tanggal;
     public $iteration;
 
-    public $selected_pengajuan;
+    public $selected_item;
     public $selected_url;
     
     public function render()
     {
         $data['pakets'] = MsSubCode::all();
-
-        $data['pengajuan_danas'] = PengajuanDana::all();
+        $data['items'] = PengajuanDana::all();
         return view('livewire.pelaksanaan.keuangan.lv-pengajuan-dana')
         ->with($data)
         ->layout('layouts.dashboard.main');
     }
 
-    public function setPaket($value)
-    {
-        $this->paket_id = $value;
-    }
-
-    public function addPengajuanDana()
+    public function addItem()
     {
         $this->validate([
             'paket_id' => 'required|integer',
@@ -56,19 +53,24 @@ class LvPengajuanDana extends Component
             'input_tanggal' => 'required|string',
         ]);
         $date_now = date('Y-m-d H:i:s', strtotime($this->input_tanggal));
-        $image_name = 'image_pengajuan_dana_'.Date('YmdHis').'.'.$this->file_image->extension();
-        $image_path = Storage::putFileAs('images/keuangan/pengajuan_dana', $this->file_image, $image_name);
-
+        $image_name = StringGenerator::fileName($this->file_image->extension());
+        $image_path = Storage::disk('sector_disk')->putFileAs(PengajuanDana::BASE_PATH, $this->file_image, $image_name);
+        
         $insert = PengajuanDana::create([
             'paket_id' => $this->paket_id,
-            'image_name' => $this->file_image->getClientOriginalName(),
-            'image_path' => $image_path,
+            'image_real_name' => $this->file_image->getClientOriginalName(),
+            'image_name' => $image_name,
             'tanggal' => $date_now,
         ]);
 
         $this->resetInput();
         
         return $this->dispatchBrowserEvent('notification:success', ['title' => 'Success!', 'message' => 'Successfully adding data.']);
+    }
+
+    public function setPaket($value)
+    {
+        $this->paket_id = $value;
     }
 
     public function setInputTanggal($value)
@@ -78,30 +80,31 @@ class LvPengajuanDana extends Component
 
     public function resetInput()
     {
-        $this->reset('paket_id', 'file_image', 'selected_pengajuan');
+        $this->reset('paket_id', 'file_image', 'selected_item');
         $this->input_tanggal = date('m/d/Y');
         $this->iteration++;
     }
 
-    public function setPengajuanDana($id)
+    public function setItem($id)
     {
-        $pengajuan = PengajuanDana::findOrFail($id);
-        $this->selected_pengajuan = $pengajuan;
-        $this->selected_url = route('image.keuangan.pengajuan_dana', ['id' => $pengajuan->id]);
+        $item = PengajuanDana::findOrFail($id);
+        $this->selected_item = $item;
+        $this->selected_url = route('files.image.stream', ['path' => $item->base_path, 'name' => $item->image_name]);
     }
 
     public function downloadImage()
     {
-        $file = PengajuanDana::findOrFail($this->selected_pengajuan['id']);
-        $path = storage_path('app/'.$file->image_path);
+        $item = PengajuanDana::findOrFail($this->selected_item['id']);
+        $path = $item->base_path.$item->image_name;
         
-        return response()->download($path, $file->image_name);
+        return Storage::disk('sector_disk')->download($path, $item->image_real_name);
     }
 
     public function delete($id)
     {
         $item = PengajuanDana::findOrFail($id);
-        Storage::delete($item->image_path);
+        $path = $item->base_path.$item->image_name;
+        Storage::disk('sector_disk')->delete($path);
         $item->delete();
         $this->resetInput();
         return ['status_code' => 200, 'message' => 'Data has been deleted.'];

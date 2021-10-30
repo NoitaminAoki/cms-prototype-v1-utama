@@ -8,14 +8,22 @@ use Illuminate\Support\Facades\Storage;
 use App\Models\{
     Keuangan\ResumeJurnal,
 };
+use App\Helpers\StringGenerator;
 
 class LvResumeJurnal extends Component
 {
     use WithFileUploads;
 
     protected $listeners = [
-        'evSetPaket' => 'setPaket',
         'evSetInputTanggal' => 'setInputTanggal',
+    ];
+
+    public $page_attribute = [
+        'title' => 'Resume Jurnal',
+    ];
+    public $page_permission = [
+        'add' => 'resume-jurnal add',
+        'delete' => 'resume-jurnal delete',
     ];
 
     public $paket_id;
@@ -23,30 +31,30 @@ class LvResumeJurnal extends Component
     public $input_tanggal;
     public $iteration;
 
-    public $selected_resume_jurnal;
+    public $selected_item;
     public $selected_url;
     
     public function render()
     {
-        $data['resume_jurnals'] = ResumeJurnal::all();
+        $data['items'] = ResumeJurnal::all();
         return view('livewire.pelaksanaan.keuangan.lv-resume-jurnal')
         ->with($data)
         ->layout('layouts.dashboard.main');
     }
 
-    public function addResumeJurnal()
+    public function addItem()
     {
         $this->validate([
             'file_image' => 'required|image',
             'input_tanggal' => 'required|string',
         ]);
         $date_now = date('Y-m-d H:i:s', strtotime($this->input_tanggal));
-        $image_name = 'image_resume_jurnal_'.Date('YmdHis').'.'.$this->file_image->extension();
-        $image_path = Storage::putFileAs('images/keuangan/resume_jurnal', $this->file_image, $image_name);
-
+        $image_name = StringGenerator::fileName($this->file_image->extension());
+        $image_path = Storage::disk('sector_disk')->putFileAs(ResumeJurnal::BASE_PATH, $this->file_image, $image_name);
+        
         $insert = ResumeJurnal::create([
-            'image_name' => $this->file_image->getClientOriginalName(),
-            'image_path' => $image_path,
+            'image_real_name' => $this->file_image->getClientOriginalName(),
+            'image_name' => $image_name,
             'tanggal' => $date_now,
         ]);
 
@@ -62,31 +70,32 @@ class LvResumeJurnal extends Component
 
     public function resetInput()
     {
-        $this->reset('file_image', 'selected_resume_jurnal');
+        $this->reset('file_image', 'selected_item');
         $this->input_tanggal = date('m/d/Y');
         $this->iteration++;
     }
 
-    public function setResumeJurnal($id)
+    public function setItem($id)
     {
-        $resume = ResumeJurnal::findOrFail($id);
-        $this->selected_resume_jurnal = $resume;
-        $this->selected_url = route('image.keuangan.resume_jurnal', ['id' => $resume->id]);
+        $item = ResumeJurnal::findOrFail($id);
+        $this->selected_item = $item;
+        $this->selected_url = route('files.image.stream', ['path' => $item->base_path, 'name' => $item->image_name]);
     }
 
     public function downloadImage()
     {
-        $file = ResumeJurnal::findOrFail($this->selected_resume_jurnal['id']);
-        $path = storage_path('app/'.$file->image_path);
+        $item = ResumeJurnal::findOrFail($this->selected_item['id']);
+        $path = $item->base_path.$item->image_name;
         
-        return response()->download($path, $file->image_name);
+        return Storage::disk('sector_disk')->download($path, $item->image_real_name);
     }
 
     public function delete($id)
     {
-        $resume_jurnal = ResumeJurnal::findOrFail($id);
-        Storage::delete($resume_jurnal->image_path);
-        $resume_jurnal->delete();
+        $item = ResumeJurnal::findOrFail($id);
+        $path = $item->base_path.$item->image_name;
+        Storage::disk('sector_disk')->delete($path);
+        $item->delete();
         $this->resetInput();
         return ['status_code' => 200, 'message' => 'Data has been deleted.'];
     }

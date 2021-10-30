@@ -31,6 +31,19 @@
                         </div>
                     </div>
                 </div>
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="w-100 mb-4">
+                                <button wire:click="testConnection" class="btn btn-primary">Get Data</button>
+                                <button wire:click="testDirectory" class="btn btn-primary ml-3">Get File</button>
+                            </div>
+                            <p>
+                                {{$divisi}}
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>

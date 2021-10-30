@@ -9,13 +9,13 @@ use App\Models\{
     Perencanaan\KonstruksiSarana,
     Perencanaan\ItemKonstruksiSarana,
 };
+use App\Helpers\StringGenerator;
 
 class LvItemKonstruksiSarana extends Component
 {
     use WithFileUploads;
 
     protected $listeners = [
-        'evSetPaket' => 'setPaket',
         'evSetInputTanggal' => 'setInputTanggal',
     ];
     
@@ -26,8 +26,6 @@ class LvItemKonstruksiSarana extends Component
         'add' => 'item-konstruksi-sarana add',
         'delete' => 'item-konstruksi-sarana delete',
     ];
-
-    public $route_pdf_item = "pdf.perencanaan.item_konstruksi_sarana";
 
     public $parent_id;
     public $file_pdf;
@@ -65,13 +63,13 @@ class LvItemKonstruksiSarana extends Component
             'input_tanggal' => 'required|string',
         ]);
         $date_now = date('Y-m-d H:i:s', strtotime($this->input_tanggal));
-        $pdf_name = 'pdf_item_konstruksi_sarana_'.Date('YmdHis').'.'.$this->file_pdf->extension();
-        $pdf_path = Storage::putFileAs('pdf/perencanaan/item_konstruksi_sarana', $this->file_pdf, $pdf_name);
+        $pdf_name = StringGenerator::fileName($this->file_pdf->extension());
+        $pdf_path = Storage::disk('sector_disk')->putFileAs(ItemKonstruksiSarana::BASE_PATH, $this->file_pdf, $pdf_name);
 
         $insert = ItemKonstruksiSarana::create([
             'konstruksi_sarana_id' => $this->parent_id,
-            'pdf_name' => $this->file_pdf->getClientOriginalName(),
-            'pdf_path' => $pdf_path,
+            'pdf_real_name' => $this->file_pdf->getClientOriginalName(),
+            'pdf_name' => $pdf_name,
             'tanggal' => $date_now,
         ]);
 
@@ -96,20 +94,22 @@ class LvItemKonstruksiSarana extends Component
     {
         $item = ItemKonstruksiSarana::findOrFail($id);
         $this->selected_item = $item;
-        $this->selected_url = route('pdf.perencanaan.item_konstruksi_sarana', ['id' => $item->id]);
+        $this->selected_url = route('files.pdf.stream', ['path' => $item->base_path, 'name' => $item->pdf_name]);
     }
 
     public function downloadPdf($pdf_number = 1)
     {
-        $file = ItemKonstruksiSarana::findOrFail($this->selected_item['id']);
-        $path = storage_path('app/'.$file->pdf_path);
-        return response()->download($path, $file->pdf_name);
+        $item= ItemKonstruksiSarana::findOrFail($this->selected_item['id']);
+        $path = $item->base_path.$item->pdf_name;
+        
+        return Storage::disk('sector_disk')->download($path, $item->pdf_real_name);
     }
 
     public function delete($id)
     {
         $item = ItemKonstruksiSarana::findOrFail($id);
-        Storage::delete($item->pdf_path);
+        $path = $item->base_path.$item->pdf_name;
+        Storage::disk('sector_disk')->delete($path);
         $item->delete();
         $this->resetInput();
         return ['status_code' => 200, 'message' => 'Data has been deleted.'];

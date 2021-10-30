@@ -9,18 +9,18 @@ use Illuminate\Support\Facades\Storage;
 use App\Models\{
     Konstruksi\ResumeKegiatan,
 };
+use App\Helpers\StringGenerator;
 
 class LvResumeKegiatan extends Component
 {
     use WithFileUploads;
     
     protected $listeners = [
-        'evSetPaket' => 'setPaket',
         'evSetInputTanggal' => 'setInputTanggal',
     ];
     
     public $page_attribute = [
-        'title' => 'Resume Kegiatan',
+        'title' => 'Resume Kegiatan Bulanan',
     ];
     public $page_permission = [
         'add' => 'resume-kegiatan add',
@@ -31,8 +31,6 @@ class LvResumeKegiatan extends Component
         'list' => true,
         'detail' => false,
     ];
-    
-    public $route_image_item = "image.konstruksi.resume_kegiatan";
     
     public $paket_id;
     public $file_image;
@@ -79,12 +77,12 @@ class LvResumeKegiatan extends Component
             'input_tanggal' => 'required|string',
         ]);
         $date_now = date('Y-m-d H:i:s', strtotime($this->input_tanggal));
-        $image_name = 'image_resume_kegiatan_'.Date('YmdHis').'.'.$this->file_image->extension();
-        $image_path = Storage::putFileAs('images/konstruksi/resume_kegiatan', $this->file_image, $image_name);
+        $image_name = StringGenerator::fileName($this->file_image->extension());
+        $image_path = Storage::disk('sector_disk')->putFileAs(ResumeKegiatan::BASE_PATH, $this->file_image, $image_name);
         
         $insert = ResumeKegiatan::create([
-            'image_name' => $this->file_image->getClientOriginalName(),
-            'image_path' => $image_path,
+            'image_real_name' => $this->file_image->getClientOriginalName(),
+            'image_name' => $image_name,
             'tanggal' => $date_now,
         ]);
         
@@ -107,9 +105,9 @@ class LvResumeKegiatan extends Component
     
     public function setItem($id)
     {
-        $resume = ResumeKegiatan::findOrFail($id);
-        $this->selected_item = $resume;
-        $this->selected_url = route('image.konstruksi.resume_kegiatan', ['id' => $resume->id]);
+        $item = ResumeKegiatan::findOrFail($id);
+        $this->selected_item = $item;
+        $this->selected_url = route('files.image.stream', ['path' => $item->base_path, 'name' => $item->image_name]);
     }
     
     public function setGroupName($name)
@@ -131,16 +129,17 @@ class LvResumeKegiatan extends Component
     
     public function downloadImage()
     {
-        $file = ResumeKegiatan::findOrFail($this->selected_item['id']);
-        $path = storage_path('app/'.$file->image_path);
+        $item = ResumeKegiatan::findOrFail($this->selected_item['id']);
+        $path = $item->base_path.$item->image_name;
         
-        return response()->download($path, $file->image_name);
+        return Storage::disk('sector_disk')->download($path, $item->image_real_name);
     }
     
     public function delete($id)
     {
         $item = ResumeKegiatan::findOrFail($id);
-        Storage::delete($item->image_path);
+        $path = $item->base_path.$item->image_name;
+        Storage::disk('sector_disk')->delete($path);
         $item->delete();
         $this->resetInput();
         return ['status_code' => 200, 'message' => 'Data has been deleted.'];

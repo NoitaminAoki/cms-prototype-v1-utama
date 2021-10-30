@@ -10,7 +10,7 @@
 <div>
     <section class="section">
         <div class="section-header">
-            <h1>Pengajuan Anggaran Proyek</h1>
+            <h1>{{$page_attribute['title']}}</h1>
             <div class="section-header-breadcrumb">
                 <div class="breadcrumb-item active"><a href="{{ route('dashboard') }}">Dashboard</a></div>
                 <div class="breadcrumb-item"><a href="{{ route('pelaksanaan.index') }}">Pelaksanaan</a></div>
@@ -22,19 +22,19 @@
             <div class="row">
                 @can('pengajuan-dana add')
                 <div class="col-12 mb-4">
-                    <button data-toggle="modal" data-target="#modalAddPengajuanDana" class="btn btn-primary"><i class="fas fa-plus-circle"></i> Add</button>
+                    <button data-toggle="modal" data-target="#modalAddItem" class="btn btn-primary"><i class="fas fa-plus-circle"></i> Add</button>
                 </div>
                 @endcan
-                @forelse ($pengajuan_danas as $pengajuan_dana)
+                @forelse ($items as $item)
                 <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-                    <a href="#" wire:click="setPengajuanDana({{$pengajuan_dana->id}})" data-toggle="modal" data-target="#modalViewPengajuanDana">
+                    <a href="#" wire:click="setItem({{$item->id}})" data-toggle="modal" data-target="#modalViewItem">
                         <div class="card shadow-sm custom-card-folder">
                             <article class="article article-style-b mb-0">
                                 <div class="article-header">
-                                    <div class="article-image" style="background-image: url({{ route('image.keuangan.pengajuan_dana', ['id'=>$pengajuan_dana->id]) }});">
+                                    <div class="article-image" style="background-image: url({{ route('files.image.stream', ['path'=>$item->base_path, 'name' => $item->image_name]) }});">
                                     </div>
                                     <div class="article-badge custom-article-badge w-100">
-                                        <div class="article-badge-item text-black custom-bg-transparent-white">{{$pengajuan_dana->image_name}}</div>
+                                        <div class="article-badge-item text-black custom-bg-transparent-white">{{$item->image_real_name}}</div>
                                     </div>
                                 </div>
                             </article>
@@ -54,16 +54,16 @@
         </div>
     </section>
     
-    <div wire:ignore.self class="modal fade" role="dialog" id="modalAddPengajuanDana">
+    <div wire:ignore.self class="modal fade" role="dialog" id="modalAddItem">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Pengajuan Dana</h5>
+                    <h5 class="modal-title">{{$page_attribute['title']}}</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <form wire:submit.prevent="addPengajuanDana" x-data="{ isUploading: false, progress: 0 }" x-on:livewire-upload-start="isUploading = true" x-on:livewire-upload-finish="isUploading = false" x-on:livewire-upload-error="isUploading = false" x-on:livewire-upload-progress="progress = $event.detail.progress">
+                <form wire:submit.prevent="addItem" x-data="{ isUploading: false, progress: 0 }" x-on:livewire-upload-start="isUploading = true" x-on:livewire-upload-finish="isUploading = false" x-on:livewire-upload-error="isUploading = false" x-on:livewire-upload-progress="progress = $event.detail.progress">
                     <div class="modal-body">
                         <div wire:ignore class="form-group">
                             <label for="code">Paket</label>
@@ -103,11 +103,11 @@
             </div>
         </div>
     </div>
-    <div wire:ignore.self class="modal fade" role="dialog" id="modalViewPengajuanDana">
+    <div wire:ignore.self class="modal fade" role="dialog" id="modalViewItem">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Pengajuan Dana</h5>
+                    <h5 class="modal-title">{{$page_attribute['title']}}</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -116,42 +116,41 @@
                     <div class="row">
                         <div class="col-md-6 col-12">
                             <div class="common-section-title">Code</div>
-                            <p>{{$selected_pengajuan['paket']['code'] ?? 'N/A'}} - {{$selected_pengajuan['paket']['nama'] ?? 'N/A'}}</p>
+                            <p>{{$selected_item['paket']['code'] ?? 'N/A'}} - {{$selected_item['paket']['nama'] ?? 'N/A'}}</p>
                         </div>
                         <div class="col-md-6 col-12">
                             <div class="common-section-title">Image Name</div>
-                            <p>{{$selected_pengajuan['image_name'] ?? '-'}}</p>
+                            <p>{{$selected_item['image_real_name'] ?? '-'}}</p>
                         </div>
                         <div class="col-md-6 col-12 mb-4">
                             <div class="common-section-title">Date</div>
-                            @if ($selected_pengajuan)
-                            <p>{{date('d F Y', strtotime($selected_pengajuan['tanggal']))}}</p>
+                            @if ($selected_item)
+                            <p>{{date('d F Y', strtotime($selected_item['tanggal']))}}</p>
                             @else
                             <p>-</p>
                             @endif
                         </div>
                     </div>
                     <div class="w-100">
-                        @if ($selected_pengajuan)
-                        <img id="img_id_{{$selected_pengajuan['id']}}" src="{{$selected_url}}" class="w-100 border shadow">
+                        @if ($selected_item)
+                        <img id="img_id_{{$selected_item['id']}}" src="{{$selected_url}}" class="w-100 border shadow">
                         @endif
                     </div>
                 </div>
                 <div class="modal-footer bg-whitesmoke br">
                     <div class="mr-auto">
-                        @if ($selected_pengajuan)
+                        @if ($selected_item)
                         @can($page_permission['delete'])
-                        <button wire:target="delete" wire:loading.class="disabled btn-progress" data-id="{{$selected_pengajuan['id']}}" type="button" class="btn btn-danger btn-delete"><i class="fas fa-trash"></i></button>
+                        <button wire:target="delete" wire:loading.class="disabled btn-progress" data-id="{{$selected_item['id']}}" type="button" class="btn btn-danger btn-delete"><i class="fas fa-trash"></i></button>
                         @endcan
                         <button wire:click="downloadImage" wire:target="downloadImage" wire:loading.class="disabled btn-progress" type="button" class="btn btn-primary"><i class="fas fa-download"></i></button>
                         @endif
                     </div>
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
-</div>
 </div>
 
 
@@ -175,13 +174,12 @@
         var target = $(this).attr('data-target');
         Swal.fire({
             title: 'Are you sure?',
-            text: "You won't be able to revert this!",
+            text: "Once deleted, you will not be able to revert this!",
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Yes, delete it!',
+            confirmButtonText: 'OK',
             showLoaderOnConfirm: true,
+            reverseButtons: true,
             preConfirm: async () => {
                 var data = await @this.delete(id)
                 return data

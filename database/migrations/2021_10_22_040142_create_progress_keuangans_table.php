@@ -15,8 +15,10 @@ class CreateProgressKeuangansTable extends Migration
     {
         Schema::create('progress_keuangans', function (Blueprint $table) {
             $table->id();
+            $table->string('sector_id', 15);
+            $table->string('image_real_name');
             $table->string('image_name');
-            $table->string('image_path');
+            $table->string('base_path');
             $table->timestamp('tanggal');
             $table->timestamps();
         });

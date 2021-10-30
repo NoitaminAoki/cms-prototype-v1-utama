@@ -3,15 +3,25 @@
 <link rel="stylesheet" href="{{ asset('assets/library/select2/css/select2.min.css') }}">
 @endsection
 
+@section('css')
+<style>
+    @media (max-width: 575.98px) {
+        .table-responsive table.custom-width-sm {
+            min-width: 400px;
+        }
+    }
+</style>
+@endsection
+
 <div>   
     <section class="section">
         <div class="section-header">
-          <h1>Roles</h1>
-          <div class="section-header-breadcrumb">
-            <div class="breadcrumb-item active"><a href="{{ route('dashboard') }}">Dashboard</a></div>
-            <div class="breadcrumb-item"><a href="{{ route('master.index') }}">Master</a></div>
-            <div class="breadcrumb-item">Roles</div>
-          </div>
+            <h1>Roles</h1>
+            <div class="section-header-breadcrumb">
+                <div class="breadcrumb-item active"><a href="{{ route('dashboard') }}">Dashboard</a></div>
+                <div class="breadcrumb-item"><a href="{{ route('master.index') }}">Master</a></div>
+                <div class="breadcrumb-item">Roles</div>
+            </div>
         </div>
         
         <div class="section-body">
@@ -25,30 +35,32 @@
                             <div class="w-100 mb-4">
                                 <button wire:click="showAddRole" wire:target="showAddRole" wire:loading.class="disabled btn-progress" class="btn btn-primary">Add</button>
                             </div>
-                            <table class="table table-bordered table-hover">
-                                <thead>
-                                    <tr>
-                                        <th class="text-left" style="width: 25px;" scope="col">#</th>
-                                        <th class="text-left" scope="col">Roles</th>
-                                        <th class="text-left" scope="col">Total Permisson(s)</th>
-                                        <th class="text-left" scope="col">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse ($roles as $key => $role)
-                                    <tr>
-                                        <td>{{$key+1}}</td>
-                                        <td>{{$role->name}}</td>
-                                        <td style="width: 200px;">{{ count($role->permissions) }}</td>
-                                        <td style="width: 150px;">-</td>
-                                    </tr>
-                                    @empty
-                                    <tr>
-                                        <td colspan="4" class="text-center text-muted">Empty</td>
-                                    </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th class="text-left" style="width: 25px;" scope="col">#</th>
+                                            <th class="text-left" scope="col">Roles</th>
+                                            <th class="text-left" scope="col">Total Permisson(s)</th>
+                                            <th class="text-left" scope="col">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse ($roles as $key => $role)
+                                        <tr>
+                                            <td>{{$key+1}}</td>
+                                            <td>{{$role->name}}</td>
+                                            <td style="width: 200px;">{{ count($role->permissions) }}</td>
+                                            <td style="width: 150px;">-</td>
+                                        </tr>
+                                        @empty
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted">Empty</td>
+                                        </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -80,30 +92,32 @@
                                         </div>
                                     </div>
                                     <div class="card-body">
-                                        <table class="table table-bordered table-hover">
-                                            <thead>
-                                                <tr>
-                                                    <th class="text-left" style="width: 25px;" scope="col">#</th>
-                                                    <th class="text-left" scope="col">Permission</th>
-                                                    <th class="text-center" scope="col">Action</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @forelse ($list_items as $key => $item)
-                                                <tr>
-                                                    <td>{{$key+1}}</td>
-                                                    <td>{{$item['name']}}</td>
-                                                    <td class="text-center" style="width: 150px;">
-                                                        <button wire:click="deletePermission({{$item['id']}})" wire:target="deletePermission({{$item['id']}})" id="btn_delete_{{$item['id']}}" wire:loading.class="disabled btn-progress" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button>
-                                                    </td>
-                                                </tr>
-                                                @empty
-                                                <tr>
-                                                    <td colspan="4" class="text-center text-muted">Empty</td>
-                                                </tr>
-                                                @endforelse
-                                            </tbody>
-                                        </table>
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th class="text-left" style="width: 25px;" scope="col">#</th>
+                                                        <th class="text-left" scope="col">Permission</th>
+                                                        <th class="text-center" scope="col">Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @forelse ($list_items as $key => $item)
+                                                    <tr>
+                                                        <td>{{$key+1}}</td>
+                                                        <td>{{$item['name']}}</td>
+                                                        <td class="text-center" style="width: 150px;">
+                                                            <button wire:click="deletePermission({{$item['id']}})" wire:target="deletePermission({{$item['id']}})" id="btn_delete_{{$item['id']}}" wire:loading.class="disabled btn-progress" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button>
+                                                        </td>
+                                                    </tr>
+                                                    @empty
+                                                    <tr>
+                                                        <td colspan="4" class="text-center text-muted">Empty</td>
+                                                    </tr>
+                                                    @endforelse
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -139,19 +153,24 @@
                         </div>
                     </div>
                     <div class="table-responsive">
-                        <table class="table table-bordered table-hover">
+                        <table class="table custom-width-sm table-bordered table-hover">
                             <thead>
                                 <tr>
                                     <th class="text-left" style="width: 25px;" scope="col">#</th>
                                     <th class="text-left" scope="col">Permission</th>
-                                    <th class="text-ceneter" style="width:50px;" scope="col">Action</th>
+                                    <th class="text-center" style="width:50px;" scope="col">
+                                        <div class="custom-control custom-checkbox">
+                                            <input wire:model="selectedAll" type="checkbox" class="custom-control-input" name="input_radio_all" id="check_box_all">
+                                            <label class="custom-control-label" for="check_box_all"></label>
+                                        </div>
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse ($permissions as $key => $permission)
                                 <tr>
                                     <td>{{$offset_permission+($key+1)}}</td>
-                                    <td>{{$permission->name}}</td>
+                                    <td style="width:250px;">{{$permission->name}}</td>
                                     <td class="text-center">
                                         <div class="custom-control custom-checkbox">
                                             <input wire:model.defer="permission_ids" value="{{$permission->id}}" type="checkbox" class="custom-control-input" name="input_radio[]" id="check_box_{{$permission->id}}">
@@ -219,6 +238,10 @@
 <script>
     document.addEventListener('modal:close', function (event) {
         $('.modal').modal('hide');
+    })
+
+    document.addEventListener('console:log', function (event) {
+        console.log(event.detail.value);
     })
     document.addEventListener('notification:success', function (event) {
         $('.modal').modal('hide');

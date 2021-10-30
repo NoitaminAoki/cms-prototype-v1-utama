@@ -4,6 +4,7 @@ namespace App\Models\Keuangan;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Config;
 
 class ResumeJurnal extends Model
 {
@@ -14,8 +15,23 @@ class ResumeJurnal extends Model
      * @var array
      */
     protected $fillable = [
+        'sector_id',
+        'image_real_name', 
         'image_name', 
-        'image_path', 
+        'base_path', 
         'tanggal',
     ];
+
+    public const BASE_PATH = 'images/keuangan/resume-jurnal/';
+
+    
+    protected static function boot()
+    {
+        parent::boot();
+
+        Self::creating(function ($model) {
+           $model->sector_id = Config::get('app.sector_id'); 
+           $model->base_path = self::BASE_PATH; 
+        });
+    }
 }

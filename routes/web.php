@@ -28,14 +28,6 @@ use App\Http\Livewire\Dashboard\{
     LvDashboard,
 };
 
-use App\Http\Livewire\Wilayah\{
-    LvWilayah,
-};
-
-use App\Http\Livewire\Tester\{
-    LvFileStorage,
-};
-
 use App\Http\Livewire\Pelaksanaan\{
     LvPelaksanaan,
 
@@ -108,9 +100,9 @@ Route::get('/email/verify', function () {
     return view('auth.verify-email');
 })->middleware('auth')->name('verification.notice');
 
-Route::get('/', LvWilayah::class);
-
-Route::get('/file-storage', LvFileStorage::class);
+Route::get('/', function () {
+    return redirect(route('dashboard')); /* jangan diganti ke login [FIX ERROR] */
+});
 
 Route::middleware(['auth:web,admin', 'verified'])->group(function () {
     Route::get('/dashboard', LvDashboard::class)->name('dashboard');
@@ -238,32 +230,8 @@ Route::middleware(['auth:web,admin', 'verified'])->group(function () {
     /* END MASTER */
     
     /* FILE STORAGE */
-    Route::get('images/keuangan/pengajuan-dana/{id}/img', [FileStorageController::class, 'imagePengajuanDana'])->name('image.keuangan.pengajuan_dana');
-    Route::get('images/keuangan/jurnal-harian/{id}/img', [FileStorageController::class, 'imageJurnalHarian'])->name('image.keuangan.jurnal_harian');
-    Route::get('images/keuangan/resume-jurnal/{id}/img', [FileStorageController::class, 'imageResumeJurnal'])->name('image.keuangan.resume_jurnal');
-    Route::get('images/keuangan/realisasi-dana/{id}/img', [FileStorageController::class, 'imageRealisasiDana'])->name('image.keuangan.realisasi_dana');
-    Route::get('images/keuangan/progress-keuangan/{id}/img', [FileStorageController::class, 'imageProgressKeuangan'])->name('image.keuangan.progress_keuangan');
-    
-    Route::get('images/umum/item-aset-perusahaan/{id}/img', [FileStorageController::class, 'imageItemAsetPerusahaan'])->name('image.umum.item_aset_perusahaan');
-    Route::get('images/umum/inventori-perusahaan/{id}/img', [FileStorageController::class, 'imageInventoriPerusahaan'])->name('image.umum.inventori_perusahaan');
-    Route::get('images/umum/laporan-kegiatan/{id}/img', [FileStorageController::class, 'imageLaporanKegiatan'])->name('image.umum.laporan_kegiatan');
-    Route::get('images/umum/item-legalitas-perusahaan/{id}/img', [FileStorageController::class, 'imageItemLegalitasPerusahaan'])->name('image.umum.item_legalitas_perusahaan');
-    Route::get('images/umum/sdm-perusahaan/{id}/img', [FileStorageController::class, 'imageSdmPerusahaan'])->name('image.umum.sdm_perusahaan');
-    
-    Route::get('images/marketing/item-marketing/{id}/img', [FileStorageController::class, 'imageItemMarketing'])->name('image.marketing.item_marketing');
-    
-    Route::get('images/konstruksi/laporan-harian/{id}/img', [FileStorageController::class, 'imageLaporanHarian'])->name('image.konstruksi.laporan_harian');
-    Route::get('images/konstruksi/item-progress-kemajuan/{id}/img', [FileStorageController::class, 'imageItemProgressKemajuan'])->name('image.konstruksi.progress_kemajuan');
-    Route::get('images/konstruksi/photo-kegiatan/{id}/img', [FileStorageController::class, 'imagePhotoKegiatan'])->name('image.konstruksi.photo_kegiatan');
-    Route::get('images/konstruksi/control-stock/{id}/img', [FileStorageController::class, 'imageControlStock'])->name('image.konstruksi.control_stock');
-    Route::get('images/konstruksi/resume-kegiatan/{id}/img', [FileStorageController::class, 'imageResumeKegiatan'])->name('image.konstruksi.resume_kegiatan');
-    Route::get('images/konstruksi/perjanjian-kontrak/{id}/img', [FileStorageController::class, 'imagePerjanjianKontrak'])->name('image.konstruksi.perjanjian_kontrak');
-
-    Route::get('files/perencanaan/financial-analysis/{id}/pdf', [FileStorageController::class, 'pdfFinancialAnalysis'])->name('pdf.perencanaan.financial_analysis');
-    Route::get('files/perencanaan/gambar-unit-rumah/{id}/pdf', [FileStorageController::class, 'pdfGambarUnitRumah'])->name('pdf.perencanaan.gambar_unit_rumah');
-    Route::get('files/perencanaan/item-unit-rumah/{id}/pdf', [FileStorageController::class, 'pdfItemUnitRumah'])->name('pdf.perencanaan.item_unit_rumah');
-    Route::get('files/perencanaan/item-konstruksi-sarana/{id}/pdf', [FileStorageController::class, 'pdfItemKonstruksiSarana'])->name('pdf.perencanaan.item_konstruksi_sarana');
-    Route::get('files/perencanaan/brosur-perumahan/{id}/pdf', [FileStorageController::class, 'pdfBrosurPerumahan'])->name('pdf.perencanaan.brosur_perumahan');
+    Route::get('files/image/stream', [FileStorageController::class, 'imageStream'])->name('files.image.stream');
+    Route::get('files/pdf/stream', [FileStorageController::class, 'pdfStream'])->name('files.pdf.stream');
     /* END FILE STORAGE */
 });
 

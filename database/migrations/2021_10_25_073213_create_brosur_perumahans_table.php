@@ -15,8 +15,10 @@ class CreateBrosurPerumahansTable extends Migration
     {
         Schema::create('brosur_perumahans', function (Blueprint $table) {
             $table->id();
+            $table->string('sector_id', 15);
+            $table->string('pdf_real_name');
             $table->string('pdf_name');
-            $table->string('pdf_path');
+            $table->string('base_path');
             $table->timestamp('tanggal');
             $table->timestamps();
         });

@@ -14,6 +14,19 @@ return [
     */
 
     'name' => env('APP_NAME', 'Laravel'),
+    
+    /*
+    |--------------------------------------------------------------------------
+    | Application Sector ID
+    |--------------------------------------------------------------------------
+    |
+    | This value is the Sector ID of your application. This value is used when the
+    | framework needs to place the application's sector ID in a data or
+    | any other location as required by the application or its packages.
+    |
+    */
+
+    'sector_id' => env('SECTOR_ID', 'ID-TSH'),
 
     /*
     |--------------------------------------------------------------------------

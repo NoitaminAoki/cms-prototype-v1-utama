@@ -9,13 +9,13 @@ use Illuminate\Support\Facades\Storage;
 use App\Models\{
     Konstruksi\LaporanHarian,
 };
+use App\Helpers\StringGenerator;
 
 class LvLaporanHarian extends Component
 {
     use WithFileUploads;
     
     protected $listeners = [
-        'evSetPaket' => 'setPaket',
         'evSetInputTanggal' => 'setInputTanggal',
     ];
     
@@ -31,8 +31,6 @@ class LvLaporanHarian extends Component
         'list' => true,
         'detail' => false,
     ];
-    
-    public $route_image_item = "image.konstruksi.laporan_harian";
     
     public $paket_id;
     public $file_image;
@@ -79,12 +77,12 @@ class LvLaporanHarian extends Component
             'input_tanggal' => 'required|string',
         ]);
         $date_now = date('Y-m-d H:i:s', strtotime($this->input_tanggal));
-        $image_name = 'image_laporan_harian_'.Date('YmdHis').'.'.$this->file_image->extension();
-        $image_path = Storage::putFileAs('images/konstruksi/laporan_harian', $this->file_image, $image_name);
+        $image_name = StringGenerator::fileName($this->file_image->extension());
+        $image_path = Storage::disk('sector_disk')->putFileAs(LaporanHarian::BASE_PATH, $this->file_image, $image_name);
         
         $insert = LaporanHarian::create([
-            'image_name' => $this->file_image->getClientOriginalName(),
-            'image_path' => $image_path,
+            'image_real_name' => $this->file_image->getClientOriginalName(),
+            'image_name' => $image_name,
             'tanggal' => $date_now,
         ]);
         
@@ -107,9 +105,9 @@ class LvLaporanHarian extends Component
     
     public function setItem($id)
     {
-        $resume = LaporanHarian::findOrFail($id);
-        $this->selected_item = $resume;
-        $this->selected_url = route('image.konstruksi.laporan_harian', ['id' => $resume->id]);
+        $item = LaporanHarian::findOrFail($id);
+        $this->selected_item = $item;
+        $this->selected_url = route('files.image.stream', ['path' => $item->base_path, 'name' => $item->image_name]);
     }
     
     public function setGroupName($name)
@@ -131,16 +129,17 @@ class LvLaporanHarian extends Component
     
     public function downloadImage()
     {
-        $file = LaporanHarian::findOrFail($this->selected_item['id']);
-        $path = storage_path('app/'.$file->image_path);
+        $item = LaporanHarian::findOrFail($this->selected_item['id']);
+        $path = $item->base_path.$item->image_name;
         
-        return response()->download($path, $file->image_name);
+        return Storage::disk('sector_disk')->download($path, $item->image_real_name);
     }
     
     public function delete($id)
     {
         $item = LaporanHarian::findOrFail($id);
-        Storage::delete($item->image_path);
+        $path = $item->base_path.$item->image_name;
+        Storage::disk('sector_disk')->delete($path);
         $item->delete();
         $this->resetInput();
         return ['status_code' => 200, 'message' => 'Data has been deleted.'];

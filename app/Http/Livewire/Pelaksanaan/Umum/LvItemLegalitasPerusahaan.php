@@ -9,6 +9,7 @@ use App\Models\{
     Umum\LegalitasPerusahaan,
     Umum\ItemLegalitasPerusahaan,
 };
+use App\Helpers\StringGenerator;
 
 class LvItemLegalitasPerusahaan extends Component
 {
@@ -25,8 +26,6 @@ class LvItemLegalitasPerusahaan extends Component
         'add' => 'item-legalitas-perusahaan add',
         'delete' => 'item-legalitas-perusahaan delete',
     ];
-
-    public $route_image_item = "image.umum.item_legalitas_perusahaan";
 
     public $parent_id;
     public $file_image;
@@ -64,13 +63,13 @@ class LvItemLegalitasPerusahaan extends Component
             'input_tanggal' => 'required|string',
         ]);
         $date_now = date('Y-m-d H:i:s', strtotime($this->input_tanggal));
-        $image_name = 'image_item_legalitas_perusahaan_'.Date('YmdHis').'.'.$this->file_image->extension();
-        $image_path = Storage::putFileAs('images/pelaksanaan/umum/item_legalitas_perusahaan', $this->file_image, $image_name);
+        $image_name = StringGenerator::fileName($this->file_image->extension());
+        $image_path = Storage::disk('sector_disk')->putFileAs(ItemLegalitasPerusahaan::BASE_PATH, $this->file_image, $image_name);
 
         $insert = ItemLegalitasPerusahaan::create([
             'legalitas_perusahaan_id' => $this->parent_id,
-            'image_name' => $this->file_image->getClientOriginalName(),
-            'image_path' => $image_path,
+            'image_real_name' => $this->file_image->getClientOriginalName(),
+            'image_name' => $image_name,
             'tanggal' => $date_now,
         ]);
 
@@ -95,20 +94,22 @@ class LvItemLegalitasPerusahaan extends Component
     {
         $item = ItemLegalitasPerusahaan::findOrFail($id);
         $this->selected_item = $item;
-        $this->selected_url = route('image.umum.item_legalitas_perusahaan', ['id' => $item->id]);
+        $this->selected_url = route('files.image.stream', ['path' => $item->base_path, 'name' => $item->image_name]);
     }
 
     public function downloadImage($image_number = 1)
     {
         $file = ItemLegalitasPerusahaan::findOrFail($this->selected_item['id']);
-        $path = storage_path('app/'.$file->image_path);
-        return response()->download($path, $file->image_name);
+        $path = $item->base_path.$item->image_name;
+        
+        return Storage::disk('sector_disk')->download($path, $item->image_real_name);
     }
 
     public function delete($id)
     {
         $item = ItemLegalitasPerusahaan::findOrFail($id);
-        Storage::delete($item->image_path);
+        $path = $item->base_path.$item->image_name;
+        Storage::disk('sector_disk')->delete($path);
         $item->delete();
         $this->resetInput();
         return ['status_code' => 200, 'message' => 'Data has been deleted.'];

@@ -9,6 +9,7 @@ use App\Models\{
     Konstruksi\ProgressKemajuan,
     Konstruksi\ItemProgressKemajuan,
 };
+use App\Helpers\StringGenerator;
 
 class LvItemProgressKemajuan extends Component
 {
@@ -30,8 +31,6 @@ class LvItemProgressKemajuan extends Component
         'list' => true,
         'detail' => false,
     ];
-
-    public $route_image_item = "image.konstruksi.item_progress_kemajuan";
 
     public $parent_id;
     public $file_image;
@@ -89,13 +88,13 @@ class LvItemProgressKemajuan extends Component
             'input_tanggal' => 'required|string',
         ]);
         $date_now = date('Y-m-d H:i:s', strtotime($this->input_tanggal));
-        $image_name = 'image_item_progress_kemajuan_'.Date('YmdHis').'.'.$this->file_image->extension();
-        $image_path = Storage::putFileAs('images/pelaksanaan/konstruksi/item_progress_kemajuan', $this->file_image, $image_name);
+        $image_name = StringGenerator::fileName($this->file_image->extension());
+        $image_path = Storage::disk('sector_disk')->putFileAs(ItemProgressKemajuan::BASE_PATH, $this->file_image, $image_name);
 
         $insert = ItemProgressKemajuan::create([
             'progress_kemajuan_id' => $this->parent_id,
-            'image_name' => $this->file_image->getClientOriginalName(),
-            'image_path' => $image_path,
+            'image_real_name' => $this->file_image->getClientOriginalName(),
+            'image_name' => $image_name,
             'tanggal' => $date_now,
         ]);
 
@@ -120,7 +119,7 @@ class LvItemProgressKemajuan extends Component
     {
         $item = ItemProgressKemajuan::findOrFail($id);
         $this->selected_item = $item;
-        $this->selected_url = route('image.konstruksi.item_progress_kemajuan', ['id' => $item->id]);
+        $this->selected_url = route('files.image.stream', ['path' => $item->base_path, 'name' => $item->image_name]);
     }
 
     public function setGroupName($name)
@@ -142,15 +141,17 @@ class LvItemProgressKemajuan extends Component
 
     public function downloadImage($image_number = 1)
     {
-        $file = ItemProgressKemajuan::findOrFail($this->selected_item['id']);
-        $path = storage_path('app/'.$file->image_path);
-        return response()->download($path, $file->image_name);
+        $item = ItemProgressKemajuan::findOrFail($this->selected_item['id']);
+        $path = $item->base_path.$item->image_name;
+        
+        return Storage::disk('sector_disk')->download($path, $item->image_real_name);
     }
 
     public function delete($id)
     {
         $item = ItemProgressKemajuan::findOrFail($id);
-        Storage::delete($item->image_path);
+        $path = $item->base_path.$item->image_name;
+        Storage::disk('sector_disk')->delete($path);
         $item->delete();
         $this->resetInput();
         return ['status_code' => 200, 'message' => 'Data has been deleted.'];

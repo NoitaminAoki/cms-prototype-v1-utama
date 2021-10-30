@@ -8,13 +8,13 @@ use Illuminate\Support\Facades\Storage;
 use App\Models\{
     Perencanaan\GambarUnitRumah,
 };
+use App\Helpers\StringGenerator;
 
 class LvGambarUnitRumah extends Component
 {
     use WithFileUploads;
 
     protected $listeners = [
-        'evSetPaket' => 'setPaket',
         'evSetInputTanggal' => 'setInputTanggal',
     ];
 
@@ -48,12 +48,12 @@ class LvGambarUnitRumah extends Component
             'input_tanggal' => 'required|string',
         ]);
         $date_now = date('Y-m-d H:i:s', strtotime($this->input_tanggal));
-        $pdf_name = 'pdf_gambar_unit_rumah_'.Date('YmdHis').'.'.$this->file_pdf->extension();
-        $pdf_path = Storage::putFileAs('pdf/perencanaan/gambar_unit_rumah', $this->file_pdf, $pdf_name);
+        $pdf_name = StringGenerator::fileName($this->file_pdf->extension());
+        $pdf_path = Storage::disk('sector_disk')->putFileAs(GambarUnitRumah::BASE_PATH, $this->file_pdf, $pdf_name);
 
         $insert = GambarUnitRumah::create([
-            'pdf_name' => $this->file_pdf->getClientOriginalName(),
-            'pdf_path' => $pdf_path,
+            'pdf_real_name' => $this->file_pdf->getClientOriginalName(),
+            'pdf_name' => $pdf_name,
             'tanggal' => $date_now,
         ]);
 
@@ -78,21 +78,22 @@ class LvGambarUnitRumah extends Component
     {
         $item = GambarUnitRumah::findOrFail($id);
         $this->selected_item = $item;
-        $this->selected_url = route('pdf.perencanaan.gambar_unit_rumah', ['id' => $item->id]);
+        $this->selected_url = route('files.pdf.stream', ['path' => $item->base_path, 'name' => $item->pdf_name]);
     }
 
     public function downloadPdf()
     {
-        $file = GambarUnitRumah::findOrFail($this->selected_item['id']);
-        $path = storage_path('app/'.$file->pdf_path);
+        $item= GambarUnitRumah::findOrFail($this->selected_item['id']);
+        $path = $item->base_path.$item->pdf_name;
         
-        return response()->download($path, $file->pdf_name);
+        return Storage::disk('sector_disk')->download($path, $item->pdf_real_name);
     }
 
     public function delete($id)
     {
         $item = GambarUnitRumah::findOrFail($id);
-        Storage::delete($item->pdf_path);
+        $path = $item->base_path.$item->pdf_name;
+        Storage::disk('sector_disk')->delete($path);
         $item->delete();
         $this->resetInput();
         return ['status_code' => 200, 'message' => 'Data has been deleted.'];

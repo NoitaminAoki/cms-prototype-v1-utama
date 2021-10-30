@@ -19,7 +19,24 @@
   @yield('css')
   
   <style>
-    
+    .card-link {
+      cursor: pointer;
+    }
+    .card-link:hover {
+      color: #0056b3;
+    }
+    .swal2-confirm.swal2-styled {
+        /* box-shadow: 0 2px 6px #acb5f6; */
+        background-color: #6777ef;
+    }
+    .swal2-cancel.swal2-styled {
+        color: #555;
+        background-color: #efefef;
+    }
+
+    .card-title {
+      color: inherit !important;
+    }
     .custom-fa-10x {
       font-size: 10em;
     }

@@ -9,13 +9,13 @@ use App\Models\{
     Perencanaan\KonstruksiUnitRumah,
     Perencanaan\ItemUnitRumah,
 };
+use App\Helpers\StringGenerator;
 
 class LvItemUnitRumah extends Component
 {
     use WithFileUploads;
 
     protected $listeners = [
-        'evSetPaket' => 'setPaket',
         'evSetInputTanggal' => 'setInputTanggal',
     ];
     
@@ -26,8 +26,6 @@ class LvItemUnitRumah extends Component
         'add' => 'item-unit-rumah add',
         'delete' => 'item-unit-rumah delete',
     ];
-
-    public $route_pdf_item = "pdf.perencanaan.item_unit_rumah";
 
     public $parent_id;
     public $file_pdf;
@@ -65,13 +63,13 @@ class LvItemUnitRumah extends Component
             'input_tanggal' => 'required|string',
         ]);
         $date_now = date('Y-m-d H:i:s', strtotime($this->input_tanggal));
-        $pdf_name = 'pdf_item_unit_rumah_'.Date('YmdHis').'.'.$this->file_pdf->extension();
-        $pdf_path = Storage::putFileAs('pdf/perencanaan/item_unit_rumah', $this->file_pdf, $pdf_name);
+        $pdf_name = StringGenerator::fileName($this->file_pdf->extension());
+        $pdf_path = Storage::disk('sector_disk')->putFileAs(ItemUnitRumah::BASE_PATH, $this->file_pdf, $pdf_name);
 
         $insert = ItemUnitRumah::create([
             'konstruksi_unit_id' => $this->parent_id,
-            'pdf_name' => $this->file_pdf->getClientOriginalName(),
-            'pdf_path' => $pdf_path,
+            'pdf_real_name' => $this->file_pdf->getClientOriginalName(),
+            'pdf_name' => $pdf_name,
             'tanggal' => $date_now,
         ]);
 
@@ -96,12 +94,12 @@ class LvItemUnitRumah extends Component
     {
         $item = ItemUnitRumah::findOrFail($id);
         $this->selected_item = $item;
-        $this->selected_url = route('pdf.perencanaan.item_unit_rumah', ['id' => $item->id]);
+        $this->selected_url = route('files.pdf.stream', ['path' => $item->base_path, 'name' => $item->pdf_name]);
     }
 
     public function downloadPdf($pdf_number = 1)
     {
-        $file = ItemUnitRumah::findOrFail($this->selected_item['id']);
+        $item= ItemUnitRumah::findOrFail($this->selected_item['id']);
         $path = storage_path('app/'.$file->pdf_path);
         return response()->download($path, $file->pdf_name);
     }
@@ -109,7 +107,8 @@ class LvItemUnitRumah extends Component
     public function delete($id)
     {
         $item = ItemUnitRumah::findOrFail($id);
-        Storage::delete($item->pdf_path);
+        $path = $item->base_path.$item->pdf_name;
+        Storage::disk('sector_disk')->delete($path);
         $item->delete();
         $this->resetInput();
         return ['status_code' => 200, 'message' => 'Data has been deleted.'];

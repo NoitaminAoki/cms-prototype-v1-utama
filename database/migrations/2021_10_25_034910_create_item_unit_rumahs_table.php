@@ -16,8 +16,10 @@ class CreateItemUnitRumahsTable extends Migration
         Schema::create('item_unit_rumahs', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('konstruksi_unit_id')->nullable();
+            $table->string('sector_id', 15);
+            $table->string('pdf_real_name');
             $table->string('pdf_name');
-            $table->string('pdf_path');
+            $table->string('base_path');
             $table->timestamp('tanggal');
             $table->timestamps();
         });

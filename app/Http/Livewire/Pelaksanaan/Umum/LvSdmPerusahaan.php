@@ -8,13 +8,13 @@ use Illuminate\Support\Facades\Storage;
 use App\Models\{
     Umum\SdmPerusahaan,
 };
+use App\Helpers\StringGenerator;
 
 class LvSdmPerusahaan extends Component
 {
     use WithFileUploads;
 
     protected $listeners = [
-        'evSetPaket' => 'setPaket',
         'evSetInputTanggal' => 'setInputTanggal',
     ];
 
@@ -25,8 +25,6 @@ class LvSdmPerusahaan extends Component
         'add' => 'sdm-perusahaan add',
         'delete' => 'sdm-perusahaan delete',
     ];
-
-    public $route_image_item = "image.umum.sdm_perusahaan";
 
     public $paket_id;
     public $file_image;
@@ -51,12 +49,12 @@ class LvSdmPerusahaan extends Component
             'input_tanggal' => 'required|string',
         ]);
         $date_now = date('Y-m-d H:i:s', strtotime($this->input_tanggal));
-        $image_name = 'image_sdm_perusahaan_'.Date('YmdHis').'.'.$this->file_image->extension();
-        $image_path = Storage::putFileAs('images/umum/sdm_perusahaan', $this->file_image, $image_name);
+        $image_name = StringGenerator::fileName($this->file_image->extension());
+        $image_path = Storage::disk('sector_disk')->putFileAs(SdmPerusahaan::BASE_PATH, $this->file_image, $image_name);
 
         $insert = SdmPerusahaan::create([
-            'image_name' => $this->file_image->getClientOriginalName(),
-            'image_path' => $image_path,
+            'image_real_name' => $this->file_image->getClientOriginalName(),
+            'image_name' => $image_name,
             'tanggal' => $date_now,
         ]);
 
@@ -79,23 +77,24 @@ class LvSdmPerusahaan extends Component
 
     public function setItem($id)
     {
-        $resume = SdmPerusahaan::findOrFail($id);
-        $this->selected_item = $resume;
-        $this->selected_url = route('image.umum.sdm_perusahaan', ['id' => $resume->id]);
+        $item = SdmPerusahaan::findOrFail($id);
+        $this->selected_item = $item;
+        $this->selected_url = route('files.image.stream', ['path' => $item->base_path, 'name' => $item->image_name]);
     }
 
     public function downloadImage()
     {
         $file = SdmPerusahaan::findOrFail($this->selected_item['id']);
-        $path = storage_path('app/'.$file->image_path);
+        $path = $item->base_path.$item->image_name;
         
-        return response()->download($path, $file->image_name);
+        return Storage::disk('sector_disk')->download($path, $item->image_real_name);
     }
 
     public function delete($id)
     {
         $item = SdmPerusahaan::findOrFail($id);
-        Storage::delete($item->image_path);
+        $path = $item->base_path.$item->image_name;
+        Storage::disk('sector_disk')->delete($path);
         $item->delete();
         $this->resetInput();
         return ['status_code' => 200, 'message' => 'Data has been deleted.'];

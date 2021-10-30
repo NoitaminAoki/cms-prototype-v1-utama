@@ -10,4 +10,9 @@ class StringGenerator
         $text = Str::random($length);
         return Str::upper($text);
     }
+
+    public static function fileName($extension)
+    {
+        return Str::random(45).'.'.$extension;
+    }
 }
